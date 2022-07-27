@@ -5,12 +5,13 @@ import "./Sphere/Sphere.sol";
 import "./Sphere/EngagementToken.sol";
 import "./VALU.sol";
 
+/// @notice Creates Spheres
 contract SphereFactory {
 
     /// @notice server_id to Sphere
     mapping(uint => address) spheres;
 
-    /// @notice Creates community level protocol
+    /// @notice Creates server-level engagement protocol a.k.a. Spheres
     /// TODO Add Gnosis multisig functionality for spheres
     function create(uint server_id, EngagementToken _token, VALU valu) public {
         // Create Engagement Sphere
@@ -20,6 +21,7 @@ contract SphereFactory {
         spheres[server_id] = address(_sphere);
     }
 
+    /// @notice Public view function for spheres mapping 
     function viewSphere(uint server_id) public view returns (address _sphere) {
         _sphere = spheres[server_id];
     }
