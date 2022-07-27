@@ -5,6 +5,10 @@ import "solmate/tokens/ERC20.sol";
 import "./EngagementToken.sol";
 import "../VALU.sol";
 
+/// @title Engagement Sphere
+/// @notice Engagement Protocol that rewards engagement-tokens based on
+/// the staked engagement-tokens of the person making the engagement.
+/// Non-transferable 🤍TOKEN is the staked TOKEN. 
 contract Sphere is ERC20 {
 
     /*///////////////////////////////////////////////////////////////
@@ -275,7 +279,7 @@ contract Sphere is ERC20 {
         emit Engagement(engager_id, engagee_id, block.timestamp, value);
     }
 
-   /*///////////////////////////////////////////////////////////////
+    /*///////////////////////////////////////////////////////////////
                                 OVERRIDES
     //////////////////////////////////////////////////////////////*/
     /// @notice Override transfer functions to make token non-transferable
