@@ -71,4 +71,18 @@ contract SphereTest is Test {
 
         assertEq(token.balanceOf(users[0]), 200 * decimals);
     }
+
+    function testInflation() public {
+        uint before = token.balanceOf(address(sphere)) / 10 ** 18;
+
+        skip(30 * 24 * 60 * 60);
+
+        sphere.inflate();
+       
+        uint newInflation = (token.balanceOf(address(sphere)) / 10 ** 18) - before;
+
+        assertEq(sphere.newInflation() / 10 ** 18, newInflation);
+
+        assertEq(newInflation, 10604);
+    }
 }
