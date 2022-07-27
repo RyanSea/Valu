@@ -29,7 +29,7 @@ contract Sphere is ERC20 {
             token = _token;
             valu = _valu;
             
-            // Set initial reward pool
+            // TEMP Set initial reward pool
             rewardPool = 100000 * 10 ** 18;
 
             last = block.timestamp;
@@ -80,6 +80,7 @@ contract Sphere is ERC20 {
         // Assign profile to discord id
         user[discord_id] = profile;
 
+        // TEMP Mint 500 tokens for newly authed user
         _mint(_address, 500 * 10 ** 18);
 
         emit Authenticate(_address, discord_id);
