@@ -1,12 +1,13 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.13;
 
-//import {ERC20} from "@rari-capital/solmate/src/tokens/ERC20.sol";
 import "./Sphere/EngagementToken.sol";
 import  "./VALU.sol";
 
 import "./Interfaces/ISphere.sol";
 import "./Interfaces/ISphereFactory.sol";
+
+import "Monarchy";
 
 /*///////////////////////////////////////////////////////////////
             UNUSED CONTRACT MEANT FOR FUTURE DEV
@@ -15,7 +16,7 @@ import "./Interfaces/ISphereFactory.sol";
 
 /// @title ValuDAO
 /// TODO Add auth (Gnosis Safe)
-contract ValuDAO {
+contract ValuDAO is Monarchy {
 
     /*///////////////////////////////////////////////////////////////
                                 CONSTRUCT
@@ -28,7 +29,7 @@ contract ValuDAO {
     constructor (
         ISphereFactory _factory, 
         VALU _valu
-    ) {
+    ) Monarchy(msg.sender) {
         valu = _valu;
         factory = _factory;
         symbols.push(keccak256(abi.encodePacked("MANA")));
@@ -51,7 +52,7 @@ contract ValuDAO {
         uint server_id, 
         string calldata token_name, 
         string calldata token_symbol
-    ) public  {
+    ) public ruled {
         //require(!sphereCreated(server_id), "SPHERE_ALREADY_CREATED");
 
         // Will revert if already exists
@@ -67,6 +68,7 @@ contract ValuDAO {
         Sphere_Profile memory profile;
         profile.token = _token;
         profile.sphere = _sphere;
+        profile.symbol = token_symbol;
 
         spheres[server_id] = profile;
 
@@ -85,7 +87,7 @@ contract ValuDAO {
         uint server_id,
         uint discord_id,
         address _address
-    ) public {
+    ) public ruled {
         spheres[server_id].sphere.authenticate(discord_id, _address);
     }
 
@@ -93,7 +95,7 @@ contract ValuDAO {
         uint server_id,
         uint discord_id,
         uint amount
-    ) public {
+    ) public ruled {
         spheres[server_id].sphere.powerUp(discord_id, amount);
     }
 
@@ -101,7 +103,7 @@ contract ValuDAO {
         uint server_id,
         uint discord_id,
         uint amount
-    ) public {
+    ) public ruled {
         spheres[server_id].sphere.powerDown(discord_id, amount);
     }
 
@@ -109,7 +111,7 @@ contract ValuDAO {
          uint server_id,
         uint discord_id,
         uint amount
-    ) public {
+    ) public ruled {
         spheres[server_id].sphere.exit(discord_id, amount);
     }
 
@@ -117,7 +119,7 @@ contract ValuDAO {
         uint server_id,
         uint engager_id,
         uint engagee_id
-    ) public {
+    ) public ruled {
         spheres[server_id].sphere.engage(engager_id, engagee_id);
     }  
 
@@ -131,12 +133,15 @@ contract ValuDAO {
     bytes32[] public symbols;
 
     struct Sphere_Profile {
-        // DAO token
+        // Engagement Token Symbol
+        string symbol;
+        // Engagement Token
         EngagementToken token;
+        // Engagement Sphere / Staked Engagement Token
+        ISphere sphere;
         // Multi-sig 
         address council; // Unused 
-        // Engagement Sphere
-        ISphere sphere;
+        
     }
 
     /// @notice Server id => Sphere Profile

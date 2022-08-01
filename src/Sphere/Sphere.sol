@@ -1,9 +1,10 @@
-//SPDX-License-Identifier: Unlicense
+// SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.13;
 
 import "solmate/tokens/ERC20.sol";
 import "./EngagementToken.sol";
 import "../VALU.sol";
+import "Monarchy";
 
 import "forge-std/console2.sol";
 
@@ -11,8 +12,7 @@ import "forge-std/console2.sol";
 /// @notice Engagement Protocol that rewards engagement-tokens based on
 /// the staked engagement-tokens of the person making the engagement.
 /// Non-transferable 🤍TOKEN is the staked TOKEN. 
-contract Sphere is ERC20 {
-
+contract Sphere is ERC20, Monarchy {
     /*///////////////////////////////////////////////////////////////
                             CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/  
@@ -22,8 +22,9 @@ contract Sphere is ERC20 {
 
     constructor(
         EngagementToken _token, 
-        VALU _valu
-    ) ERC20(
+        VALU _valu,
+        address _king
+    ) Monarchy(_king) ERC20(
             string(abi.encodePacked(unicode"🤍-", _token.name())),
             string(abi.encodePacked(unicode"🤍", _token.symbol())),
             18
@@ -60,7 +61,7 @@ contract Sphere is ERC20 {
     mapping (address => uint) public discord;
 
     /// @notice Server id => server owner id (discord)
-    mapping (uint => uint) public owner;
+    mapping (uint => uint) public server_owner;
 
     /*///////////////////////////////////////////////////////////////
                                 LOGIN
@@ -73,7 +74,7 @@ contract Sphere is ERC20 {
     event OwnerAssigned(uint indexed server_id, uint indexed owner_id);
 
     /// @notice Assigns address to a user's Profile struct and maps struct to discord id
-    function authenticate(uint discord_id, address _address) public {
+    function authenticate(uint discord_id, address _address) public ruled  {
         // Create Profile struct 
         Profile memory profile;
 
@@ -129,7 +130,7 @@ contract Sphere is ERC20 {
     /// FROM APP ///
 
     /// @notice Stake
-    function powerUp(uint discord_id, uint amount) public returns(bool success) {
+    function powerUp(uint discord_id, uint amount) public ruled returns(bool success) {
         console.log("ADDRESS:", msg.sender);
 
         address _address = user[discord_id].eoa;
@@ -146,7 +147,7 @@ contract Sphere is ERC20 {
     }
 
     /// @notice Unstake
-    function powerDown(uint discord_id, uint amount) public {
+    function powerDown(uint discord_id, uint amount) public ruled {
         address _address = user[discord_id].eoa;
 
         uint _balance = balanceOf[_address];
@@ -161,7 +162,7 @@ contract Sphere is ERC20 {
     }
 
     /// @notice burn staked tokens for $VALU
-    function exit(uint discord_id, uint amount) public {
+    function exit(uint discord_id, uint amount) public ruled {
         address _address = user[discord_id].eoa;
 
         uint _balance = balanceOf[_address];
@@ -303,7 +304,7 @@ contract Sphere is ERC20 {
         // All params are discord id's
         uint engager_id, 
         uint engagee_id
-    ) public {
+    ) public ruled {
         // Mint Engagement Tokens to reward pool
         inflate();
 
