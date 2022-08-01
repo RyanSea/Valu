@@ -5,6 +5,8 @@ import "solmate/tokens/ERC20.sol";
 import "./EngagementToken.sol";
 import "../VALU.sol";
 
+import "forge-std/console2.sol";
+
 /// @title Engagement Sphere
 /// @notice Engagement Protocol that rewards engagement-tokens based on
 /// the staked engagement-tokens of the person making the engagement.
@@ -54,6 +56,9 @@ contract Sphere is ERC20 {
     /// @notice Discord id => Profile
     mapping (uint => Profile) public user;
 
+    /// @notice Address => discord id
+    mapping (address => uint) public discord;
+
     /// @notice Server id => server owner id (discord)
     mapping (uint => uint) public owner;
 
@@ -62,28 +67,29 @@ contract Sphere is ERC20 {
     //////////////////////////////////////////////////////////////*/
 
     /// @notice User authenticated with Ethereum wallet
-    event Authenticate(address indexed _address, uint indexed discord_id);
+    event Authenticate(uint indexed discord_id, address indexed _address);
 
     /// @notice Owner id assigned to server id (discord)
     event OwnerAssigned(uint indexed server_id, uint indexed owner_id);
 
     /// @notice Assigns address to a user's Profile struct and maps struct to discord id
-    function authenticate(
-        uint discord_id, 
-        address _address
-    ) public {
-
+    function authenticate(uint discord_id, address _address) public {
         // Create Profile struct 
         Profile memory profile;
+
+        // Set address for struct
         profile.eoa = _address;
 
         // Assign profile to discord id
         user[discord_id] = profile;
 
+        // Assign discord id to address
+        discord[_address] = discord_id;
+
         // TEMP Mint 500 tokens for newly authed user
         _mint(_address, 500 * 10 ** 18);
 
-        emit Authenticate(_address, discord_id);
+        emit Authenticate(discord_id, _address);
     }
 
     function getAddress(uint discord_id) public view returns (address _address) {
@@ -98,37 +104,45 @@ contract Sphere is ERC20 {
     event PowerUp(
         uint indexed discord_id, 
         address indexed _address,
-        uint amount
+        uint amount,
+        bool indexed _internal
     );
 
     /// @notice Unstaking event
     event PowerDown(
         uint indexed discord_id,
         address indexed _address,
-        uint amount
+        uint amount,
+        bool indexed _internal
     );
     
     /// @notice Event for exchchanging staked tokens for VALU
+    /// @param _internal Called from ValuBot
     event Exit(
         uint indexed discord_id,
         address indexed _address,
         uint amountBurnt,
-        uint amountValu
+        uint amountValu,
+        bool indexed _internal 
     );
 
+    /// FROM APP ///
+
     /// @notice Stake
-    function powerUp(uint discord_id, uint amount) public{
+    function powerUp(uint discord_id, uint amount) public returns(bool success) {
+        console.log("ADDRESS:", msg.sender);
+
         address _address = user[discord_id].eoa;
 
         uint _balance = token.balanceOf(_address);
 
         uint _amount = _balance >= amount ? amount : _balance;
 
-        token.transferFrom(_address, address(this), _amount);
+        success = token.transferFrom(_address, address(this), _amount);
 
         _mint(_address, _amount);
 
-        emit PowerUp(discord_id, _address, _amount);
+        emit PowerUp(discord_id, _address, _amount, true);
     }
 
     /// @notice Unstake
@@ -143,7 +157,7 @@ contract Sphere is ERC20 {
 
         token.transfer(_address, _amount);
 
-        emit PowerDown(discord_id, _address, _amount);
+        emit PowerDown(discord_id, _address, _amount, true);
     }
 
     /// @notice burn staked tokens for $VALU
@@ -162,7 +176,52 @@ contract Sphere is ERC20 {
 
         valu.transfer(_address, _valu);
 
-        emit Exit(discord_id, _address, _amount, _valu);
+        emit Exit(discord_id, _address, _amount, _valu, true);
+    }
+
+    /// FROM EOA ///
+
+    /// @notice PowerUp From EOA
+    function stake(uint amount) public {
+        uint _balance = token.balanceOf(msg.sender);
+
+        uint _amount = _balance >= amount ? amount : _balance;
+
+        token.transferFrom(msg.sender, address(this), _amount);
+
+        _mint(msg.sender, _amount);
+
+        emit PowerUp(discord[msg.sender], msg.sender, _amount, false);
+    }
+
+    /// @notice PowerDown from EOA
+    function unstake(uint amount) public {
+        uint _balance = balanceOf[msg.sender];
+
+        uint _amount = _balance >= amount ? amount : _balance;
+
+        _burn(msg.sender, _amount);
+
+        token.transfer(msg.sender, _amount);
+
+        emit PowerDown(discord[msg.sender], msg.sender, _amount, false);
+    }
+    
+    /// @notice Exit from EOA
+    function claim(uint amount) public {
+        uint _balance = balanceOf[msg.sender];
+
+        uint _amount = _balance >= amount ? amount : _balance;
+
+        uint _valu = valu.balanceOf(address(this)) / totalSupply * _amount;
+
+        _burn(msg.sender, _amount);
+
+        token.burn(address(this), _amount);
+
+        valu.transfer(msg.sender, _valu);
+
+        emit Exit(discord[msg.sender], msg.sender, _amount, _valu, false);
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -171,9 +230,6 @@ contract Sphere is ERC20 {
 
     /// @notice Reward pool that fills with inflation and gets distrubuted as yield 
     uint public rewardPool;
-
-    /// @notice Core team income, to pay for dev work and gas — TBD, unused for now
-    uint public core;
 
     /// @notice Last time inflation was calculated 
     uint public last; 
