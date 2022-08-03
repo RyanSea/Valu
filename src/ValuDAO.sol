@@ -26,13 +26,12 @@ contract ValuDAO is Monarchy {
 
     VALU public immutable valu;
 
-    constructor (
-        ISphereFactory _factory, 
-        VALU _valu
-    ) Monarchy(msg.sender) {
+    constructor (ISphereFactory _factory, VALU _valu) Monarchy(msg.sender) {
         valu = _valu;
+
         factory = _factory;
-        symbols.push(keccak256(abi.encodePacked("MANA")));
+
+        symbols[valu.symbol()] = true;
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -53,10 +52,9 @@ contract ValuDAO is Monarchy {
         string calldata token_name, 
         string calldata token_symbol
     ) public ruled {
-        //require(!sphereCreated(server_id), "SPHERE_ALREADY_CREATED");
+        require(bytes(spheres[server_id].symbol).length == 0, "SPHERE_ALREADY_CREATED");
 
-        // Will revert if already exists
-        //bytes32 _symbol = symbolExists(token_symbol);
+        require(symbols[token_symbol] == false, "SYMBOL_TAKED");
         
         EngagementToken _token = new EngagementToken(token_name, token_symbol);
 
@@ -64,8 +62,8 @@ contract ValuDAO is Monarchy {
 
         ISphere _sphere = ISphere(factory.viewSphere(server_id));
 
-        // Create Engagement Sphere Profile 
         Sphere_Profile memory profile;
+
         profile.token = _token;
         profile.sphere = _sphere;
         profile.symbol = token_symbol;
@@ -74,7 +72,7 @@ contract ValuDAO is Monarchy {
 
         valu.mint(address(_sphere), 10000 * 10 ** 18);
 
-        //symbols.push(_symbol);
+        symbols[token_name] = true;
 
         emit SphereCreated(server_id, address(_token), address(_sphere), token_symbol);
     }
@@ -129,8 +127,8 @@ contract ValuDAO is Monarchy {
 
     //// INTERNAL ////
 
-    /// @notice Storage of Engagement Token symbols (as bytes)
-    bytes32[] public symbols;
+    /// @notice Symbol => Whether or not it's in use
+    mapping (string => bool) public symbols;
 
     struct Sphere_Profile {
         // Engagement Token Symbol
@@ -146,22 +144,6 @@ contract ValuDAO is Monarchy {
 
     /// @notice Server id => Sphere Profile
     mapping(uint => Sphere_Profile) public spheres;
-
-    /// @notice Returns true if server id has already created a sphere
-    function sphereCreated(uint server_id) public view returns (bool exists) {
-        exists = address(spheres[server_id].sphere) != address(0);
-    }
-
-    /// @notice Reverts if existing Engagement Token has symbol, returns bytes32 version of symbol otherwise
-    function symbolExists(string calldata token_symbol) internal view returns (bytes32 _symbol) {
-        uint symbolInventory = symbols.length;
-        _symbol = keccak256(abi.encodePacked(token_symbol));
-
-        // Iterate through symbols and require non are token_symbol
-        for(uint i = 0; i < symbolInventory; i++) {
-            require(symbols[i] != _symbol, "USED_SYMBOL");
-        }
-    }
     
     //// EXTERNAL ////
 
