@@ -8,6 +8,7 @@ import "Monarchy";
 
 import "forge-std/console2.sol";
 
+/// TODO Modify monarchy to not need a constructor?
 /// @title Engagement Sphere
 /// @notice Engagement Protocol that rewards engagement-tokens based on
 /// the staked engagement-tokens of the person making the engagement.
@@ -23,23 +24,23 @@ contract Sphere is ERC20, Monarchy {
     constructor(
         EngagementToken _token, 
         VALU _valu,
-        address _king
+        address _king 
     ) Monarchy(_king) ERC20(
-            string(abi.encodePacked(unicode"🤍-", _token.name())),
-            string(abi.encodePacked(unicode"🤍", _token.symbol())),
-            18
-        ) {
-            token = _token;
-            valu = _valu;
-            
-            // TEMP Set initial reward pool
-            rewardPool = 100000 * 10 ** 18;
+        string(abi.encodePacked(unicode"🤍-", _token.name())),
+        string(abi.encodePacked(unicode"🤍", _token.symbol())),
+        18
+    ) {
+        token = _token;
+        valu = _valu;
+        
+        // TEMP Set initial reward pool
+        rewardPool = 100000 * 10 ** 18;
 
-            last = block.timestamp;
+        last = block.timestamp;
 
-            _mint(address(this),rewardPool);
-            token.mint(address(this), rewardPool);
-        }
+        _mint(address(this),rewardPool);
+        token.mint(address(this), rewardPool);
+    }
 
     /*///////////////////////////////////////////////////////////////
                                 USER

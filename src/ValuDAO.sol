@@ -130,6 +130,9 @@ contract ValuDAO is Monarchy {
     /// @notice Symbol => Whether or not it's in use
     mapping (string => bool) public symbols;
 
+    /// @notice Server id => Sphere Profile
+    mapping(uint => Sphere_Profile) public spheres;
+
     struct Sphere_Profile {
         // Engagement Token Symbol
         string symbol;
@@ -138,13 +141,8 @@ contract ValuDAO is Monarchy {
         // Engagement Sphere / Staked Engagement Token
         ISphere sphere;
         // Multi-sig 
-        address council; // Unused 
-        
+        address council; // Unused      
     }
-
-    /// @notice Server id => Sphere Profile
-    mapping(uint => Sphere_Profile) public spheres;
-    
     //// EXTERNAL ////
 
     /// @notice Get user's address by Discord ID

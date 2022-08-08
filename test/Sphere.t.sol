@@ -31,7 +31,6 @@ contract SphereTest is Test {
         valu = new VALU();
         token = new EngagementToken('My DAO Token','TOKEN');
         sphere = new Sphere(token, valu);
-        console.log("SENDER",msg.sender);
     }
 
     function testTokens() public { 
@@ -43,7 +42,9 @@ contract SphereTest is Test {
 
     function testLogin() public {
         sphere.authenticate(1, users[0]);
+
         (address _ryan, , ) = sphere.user(1);
+
         assertEq(_ryan, users[0]);
     }
 
@@ -72,10 +73,14 @@ contract SphereTest is Test {
         assertEq(token.balanceOf(users[0]), 200 * decimals);
     }
 
+    function testExit() public {
+        // Test Exit...
+    }
+
     function testInflation() public {
         uint before = token.balanceOf(address(sphere)) / 10 ** 18;
 
-        skip(30 * 24 * 60 * 60);
+        skip(30 * 24 * 60 * 60); // Month
 
         sphere.inflate();
        
@@ -84,5 +89,17 @@ contract SphereTest is Test {
         assertEq(sphere.newInflation() / 10 ** 18, newInflation);
 
         assertEq(newInflation, 10604);
+    }
+
+    function testCaller() public {
+        sphere.authenticate(1, users[0]);
+        sphere.powerDown(1, 500 * 10 ** 18);
+
+        assertEq(token.balanceOf(users[0]), 500 * decimals);
+
+        vm.prank(users[0]);
+        sphere.stake(250 * decimals);
+
+        assertEq(token.balanceOf(users[0]), 500 * decimals);
     }
 }
