@@ -7,7 +7,7 @@ import  "./VALU.sol";
 import "./Interfaces/ISphere.sol";
 import "./Interfaces/ISphereFactory.sol";
 
-import "Monarchy";
+import "Monarchy/";
 
 /*///////////////////////////////////////////////////////////////
             UNUSED CONTRACT MEANT FOR FUTURE DEV

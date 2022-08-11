@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import "./Sphere/Sphere.sol";
 import "./Sphere/EngagementToken.sol";
 import "./VALU.sol";
-import 'Monarchy';
+import 'Monarchy/';
 
 /// @notice Creates Spheres
 contract SphereFactory is Monarchy {

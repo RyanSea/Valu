@@ -4,7 +4,9 @@ pragma solidity ^0.8.13;
 import "solmate/tokens/ERC20.sol";
 import "./EngagementToken.sol";
 import "../VALU.sol";
-import "Monarchy";
+import "Monarchy/";
+
+import "forge-std/console.sol";
 
 import "forge-std/console2.sol";
 
@@ -24,12 +26,13 @@ contract Sphere is ERC20, Monarchy {
     constructor(
         EngagementToken _token, 
         VALU _valu,
-        address _king 
+        address _king
     ) Monarchy(_king) ERC20(
         string(abi.encodePacked(unicode"🤍-", _token.name())),
         string(abi.encodePacked(unicode"🤍", _token.symbol())),
         18
     ) {
+        console.log("Valu?",msg.sender);
         token = _token;
         valu = _valu;
         

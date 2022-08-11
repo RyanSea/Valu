@@ -30,7 +30,7 @@ contract SphereTest is Test {
 
         valu = new VALU();
         token = new EngagementToken('My DAO Token','TOKEN');
-        sphere = new Sphere(token, valu);
+        sphere = new Sphere(token, valu, address(valu));
     }
 
     function testTokens() public { 

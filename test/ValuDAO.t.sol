@@ -26,15 +26,21 @@ contract ValuDAOTest is Test {
         vm.label(users[0], "Ryan");
 
         $valu = new VALU();
+
         spherefactory = new SphereFactory();
-        console.log(address(spherefactory));
-        console.log(address($valu));
+
         valudao = new ValuDAO(ISphereFactory(address(spherefactory)), $valu);
+
+        spherefactory.annoint(address(valudao));
+
+        vm.label(address(valudao), "Valu");
     }
 
     function testSphereCreate() public {
         console.log("DAO Address:",address(valudao));
         console.log("This Wallet:",msg.sender);
+        console.log("SphereFactory",address(spherefactory));
+
         valudao.create(1, "Cereal Token", "YUM");
     }
 
