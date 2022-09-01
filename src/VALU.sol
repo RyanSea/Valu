@@ -1,14 +1,15 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.13;
 
-import "forge-std/Test.sol";
 import "solmate/tokens/ERC20.sol";
 
-contract VALU is ERC20 {
+import "Monarchy/";
 
-    constructor() ERC20("Valu Token", "VALU", 18){}
+contract VALU is ERC20, Monarchy {
 
-    function mint(address to, uint amount) public {
+    constructor() ERC20("Valu Token", "VALU", 18) Monarchy(msg.sender){}
+
+    function mint(address to, uint amount) public ruled {
         _mint(to, amount);
     }
 

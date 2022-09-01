@@ -136,8 +136,6 @@ contract Sphere is ERC20, Monarchy {
         bool indexed _internal 
     );
 
-    /// FROM APP ///
-
     /// @notice Stake
     function powerUp(uint discord_id, uint amount) public ruled returns(bool success) {
         console.log("ADDRESS:", msg.sender);
@@ -147,6 +145,8 @@ contract Sphere is ERC20, Monarchy {
         uint _balance = token.balanceOf(_address);
 
         uint _amount = _balance >= amount ? amount : _balance;
+
+        token.allow(_address, _amount);
 
         success = token.transferFrom(_address, address(this), _amount);
 
@@ -187,51 +187,6 @@ contract Sphere is ERC20, Monarchy {
         valu.transfer(_address, _valu);
 
         emit Exit(discord_id, _address, _amount, _valu, true);
-    }
-
-    /// FROM EOA ///
-
-    /// @notice PowerUp From EOA
-    function stake(uint amount) public {
-        uint _balance = token.balanceOf(msg.sender);
-
-        uint _amount = _balance >= amount ? amount : _balance;
-
-        token.transferFrom(msg.sender, address(this), _amount);
-
-        _mint(msg.sender, _amount);
-
-        emit PowerUp(discord[msg.sender], msg.sender, _amount, false);
-    }
-
-    /// @notice PowerDown from EOA
-    function unstake(uint amount) public {
-        uint _balance = balanceOf[msg.sender];
-
-        uint _amount = _balance >= amount ? amount : _balance;
-
-        _burn(msg.sender, _amount);
-
-        token.transfer(msg.sender, _amount);
-
-        emit PowerDown(discord[msg.sender], msg.sender, _amount, false);
-    }
-    
-    /// @notice Exit from EOA
-    function claim(uint amount) public {
-        uint _balance = balanceOf[msg.sender];
-
-        uint _amount = _balance >= amount ? amount : _balance;
-
-        uint _valu = valu.balanceOf(address(this)) / totalSupply * _amount;
-
-        _burn(msg.sender, _amount);
-
-        token.burn(address(this), _amount);
-
-        valu.transfer(msg.sender, _valu);
-
-        emit Exit(discord[msg.sender], msg.sender, _amount, _valu, false);
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -344,6 +299,54 @@ contract Sphere is ERC20, Monarchy {
         engager.mana -= 10;
 
         emit Engagement(engager_id, engagee_id, block.timestamp, value);
+    }
+
+    /*///////////////////////////////////////////////////////////////
+                            USER EOA STAKING
+    //////////////////////////////////////////////////////////////*/
+
+    /// @notice PowerUp From EOA
+    function stake(uint amount) public {
+        uint _balance = token.balanceOf(msg.sender);
+
+        uint _amount = _balance >= amount ? amount : _balance;
+
+
+        token.transferFrom(msg.sender, address(this), _amount);
+
+        _mint(msg.sender, _amount);
+
+        emit PowerUp(discord[msg.sender], msg.sender, _amount, false);
+    }
+
+    /// @notice PowerDown from EOA
+    function unstake(uint amount) public {
+        uint _balance = balanceOf[msg.sender];
+
+        uint _amount = _balance >= amount ? amount : _balance;
+
+        _burn(msg.sender, _amount);
+
+        token.transfer(msg.sender, _amount);
+
+        emit PowerDown(discord[msg.sender], msg.sender, _amount, false);
+    }
+    
+    /// @notice Exit from EOA
+    function claim(uint amount) public {
+        uint _balance = balanceOf[msg.sender];
+
+        uint _amount = _balance >= amount ? amount : _balance;
+
+        uint _valu = valu.balanceOf(address(this)) / totalSupply * _amount;
+
+        _burn(msg.sender, _amount);
+
+        token.burn(address(this), _amount);
+
+        valu.transfer(msg.sender, _valu);
+
+        emit Exit(discord[msg.sender], msg.sender, _amount, _valu, false);
     }
 
     /*///////////////////////////////////////////////////////////////

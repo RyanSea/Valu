@@ -15,14 +15,17 @@ contract SphereFactory is Monarchy {
     mapping(uint => address) spheres;
 
     /// @notice Creates server-level engagement protocol a.k.a. Spheres
-    /// TODO Add Gnosis multisig functionality for spheres
-    function create(uint server_id, EngagementToken _token, VALU valu) public ruled {
-        console.log("Calling Factory:", msg.sender);
+    function create(
+        uint, 
+        EngagementToken _token, 
+        VALU valu
+    ) public ruled returns(address _sphere) {
         // Create Engagement Sphere
-        Sphere _sphere = new Sphere(_token, valu, king);
+        _sphere = address(new Sphere(_token, valu, king));
 
+        
         // Assign Engagement Sphere Profile to Server ID
-        spheres[server_id] = address(_sphere);
+        //spheres[server_id] = address(_sphere);
     }
 
     /// @notice Public view function for spheres mapping 

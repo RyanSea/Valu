@@ -9,7 +9,7 @@ interface ISphereFactory {
         uint server_id, 
         EngagementToken _token, 
         VALU valu
-    ) external;
+    ) external returns (address);
 
     function viewSphere(uint server_id) external view returns (address);
 }

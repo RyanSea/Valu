@@ -58,19 +58,19 @@ contract ValuDAO is Monarchy {
         
         EngagementToken _token = new EngagementToken(token_name, token_symbol);
 
-        factory.create(server_id, _token, valu);
+        address _sphere = factory.create(server_id, _token, valu);
 
-        ISphere _sphere = ISphere(factory.viewSphere(server_id));
+        _token.annoint(_sphere);
 
         Sphere_Profile memory profile;
 
         profile.token = _token;
-        profile.sphere = _sphere;
+        profile.sphere = ISphere(_sphere);
         profile.symbol = token_symbol;
 
         spheres[server_id] = profile;
 
-        valu.mint(address(_sphere), 10000 * 10 ** 18);
+        valu.mint(_sphere, 10000 * 10 ** 18);
 
         symbols[token_name] = true;
 
