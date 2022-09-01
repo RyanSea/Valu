@@ -2,6 +2,8 @@
 pragma solidity ^0.8.13;
 
 import "solmate/tokens/ERC20.sol";
+import "solmate/utils/FixedPointMathLib.sol";
+
 import "./EngagementToken.sol";
 import "../VALU.sol";
 import "Monarchy/";
@@ -17,11 +19,14 @@ import "forge-std/console2.sol";
 /// Non-transferable 🤍TOKEN is the staked TOKEN. 
 contract Sphere is ERC20, Monarchy {
     /*///////////////////////////////////////////////////////////////
-                            CONSTRUCTOR
+                            INITIALIZATION
     //////////////////////////////////////////////////////////////*/  
 
     EngagementToken immutable public token;
+
     VALU immutable public valu;
+
+    using FixedPointMathLib for uint;
 
     constructor(
         EngagementToken _token, 
@@ -342,24 +347,20 @@ contract Sphere is ERC20, Monarchy {
     }
 
     /*///////////////////////////////////////////////////////////////
-                                OVERRIDES
+                               SOULBOUND
     //////////////////////////////////////////////////////////////*/
     /// @notice Override transfer functions to make token non-transferable
+    /// TODO test undeclared param variables
 
-    function transfer(address to, uint256 amount) public virtual override returns(bool) {
-        to;
-        amount;
+    function transfer(address, uint256) public virtual override returns (bool) {
         return false; 
     }
 
     function transferFrom(
-        address from, 
-        address to, 
-        uint256 amount
-    ) public virtual override returns(bool) {
-        from;
-        to;
-        amount;
+        address, 
+        address, 
+        uint256
+    ) public virtual override returns (bool) {
         return false;
     }
 
