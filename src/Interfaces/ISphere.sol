@@ -13,4 +13,6 @@ interface ISphere {
     function exit(uint discord_id, uint amount) external;
 
     function engage(uint engager_id, uint engagee_id) external;
+
+    function balanceOf(address user) external view returns (uint);
 }

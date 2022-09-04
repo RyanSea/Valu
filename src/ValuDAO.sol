@@ -60,7 +60,7 @@ contract ValuDAO is Monarchy {
 
         address _sphere = factory.create(server_id, _token, valu);
 
-        _token.annoint(_sphere);
+        //_token.annoint(_sphere);
 
         Sphere_Profile memory profile;
 

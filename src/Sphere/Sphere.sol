@@ -14,14 +14,12 @@ import "forge-std/console2.sol";
 
 /// TODO Modify monarchy to not need a constructor?
 /// @title Engagement Sphere
-/// @notice Engagement Protocol that rewards engagement-tokens based on
-/// the staked engagement-tokens of the person making the engagement.
-/// Non-transferable 🤍TOKEN is the staked TOKEN. 
+/// @notice tokenized engagement protocol
 contract Sphere is ERC20, Monarchy {
     /*///////////////////////////////////////////////////////////////
-                            INITIALIZATION
+                             INITIALIZATION
     //////////////////////////////////////////////////////////////*/  
-
+    
     EngagementToken immutable public token;
 
     VALU immutable public valu;
@@ -37,7 +35,6 @@ contract Sphere is ERC20, Monarchy {
         string(abi.encodePacked(unicode"🤍", _token.symbol())),
         18
     ) {
-        console.log("Valu?",msg.sender);
         token = _token;
         valu = _valu;
         
@@ -51,7 +48,7 @@ contract Sphere is ERC20, Monarchy {
     }
 
     /*///////////////////////////////////////////////////////////////
-                                USER
+                                  USER
     //////////////////////////////////////////////////////////////*/
 
     struct Profile {
@@ -67,13 +64,14 @@ contract Sphere is ERC20, Monarchy {
     mapping (uint => Profile) public user;
 
     /// @notice Address => discord id
+    /// @dev for direct eoa staking / unstaking
     mapping (address => uint) public discord;
 
     /// @notice Server id => server owner id (discord)
     mapping (uint => uint) public server_owner;
 
     /*///////////////////////////////////////////////////////////////
-                                LOGIN
+                                  LOGIN
     //////////////////////////////////////////////////////////////*/
 
     /// @notice User authenticated with Ethereum wallet
@@ -107,9 +105,9 @@ contract Sphere is ERC20, Monarchy {
     }
 
     /*///////////////////////////////////////////////////////////////
-                                STAKE
+                                 STAKE
     //////////////////////////////////////////////////////////////*/
-
+    
     /// @notice Staking event
     event PowerUp(
         uint indexed discord_id, 
@@ -138,8 +136,6 @@ contract Sphere is ERC20, Monarchy {
 
     /// @notice Stake
     function powerUp(uint discord_id, uint amount) public ruled returns(bool success) {
-        console.log("ADDRESS:", msg.sender);
-
         address _address = user[discord_id].eoa;
 
         uint _balance = token.balanceOf(_address);
@@ -193,25 +189,22 @@ contract Sphere is ERC20, Monarchy {
                         CORE ENGAGEMENT PROTOCOL
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice Reward pool that fills with inflation and gets distrubuted as yield 
+    /// @notice reward pool fills with inflation & gets distributed as yield
     uint public rewardPool;
 
-    /// @notice Last time inflation was calculated 
+    /// @notice last inflationary event
     uint public last; 
 
-    /// @notice Compound frequency in seconds 
-    uint public frequency = 30;
-
-    /// @notice Rate of inflation (x 10000000000) | 0.0000011666 | 10.6% /month @ 30 sec freq
+    /// @notice rate of inflation (x 100000000000) 
     uint public inflation = 11666;
 
-    /// @notice Number of tokens from last inflationary event
+    /// @notice new tokens from last inflation
     uint public newInflation;
 
-    /// @notice The multiple required to get infllation to a whole number
-    uint public multiple = 10000000000;
+    /// @notice multiple to get inflation to whole num
+    uint public multiple = 100000000000;
 
-    /// @notice Engagement-Action between users
+    /// @notice engagement-Action between users
     event Engagement(
         uint indexed from_discord_id,
         uint indexed to_discord_id,
@@ -219,41 +212,41 @@ contract Sphere is ERC20, Monarchy {
         uint value
     );
 
-    /// @notice Inflation event
+    /// @notice inflation event
     event Inflation(uint time, uint amount);
 
-    /// @notice Inflate the rewardPool based on the amount of Powered Up Engagement Tokens
+    /// @notice inflate the rewardPool based on the amount of Powered Up Engagement Tokens
     function inflate() public {
         // Caulculate inflation intervals since last inflation event
         uint current = block.timestamp;
 
-        uint intervals = (current - last) /  frequency;
+        uint intervals = current - last;
 
         if (intervals == 0) return;
         
         newInflation = totalSupply;
 
-        // Calculate new inflation
-        // TODO Optimize this
+        // calculate new inflation
+        // todo optimize this
         for(uint i; i < intervals; ++i){
             newInflation += newInflation * inflation / multiple;
         }
         newInflation -= totalSupply;
 
-        // Mint new inflation
+        // mint new inflation
         token.mint(address(this), newInflation);
 
-        // Add to reward pool
+        // add to reward pool
         rewardPool += newInflation;
         
-        // Update last to current timestamp
+        // update last to current timestamp
         last = current;
 
         emit Inflation(last, newInflation); 
     }
 
-    /// @notice Engagement Mana dictates user engagement power. It can be 1-100 
-    /// it decreases by 10 with use and increases by 1 every 36 seconds
+    /// @notice engagement mana dictates user engagement power | 0 - 100
+    /// @notice decreases by 10 with each use and increases by 1 every 36 seconds
     function calculateMana(uint discord_id) private {
         // Add 1 mana for every 36 seconds that past since last engagement
         uint mana = user[discord_id].mana + (block.timestamp - user[discord_id].lastEngagement) / 36;
@@ -262,41 +255,41 @@ contract Sphere is ERC20, Monarchy {
         user[discord_id].mana = mana <= 100 ? mana : 100;
     }
 
-    /// @notice Core engagement function
-    /// TODO Reward server from engagement 
+    /// @notice core engagement function
+    /// todo reward server from engagement (platform rewards)
     function engage(
-        // All params are discord id's
         uint engager_id, 
         uint engagee_id
     ) public ruled {
-        // Mint Engagement Tokens to reward pool
+        // mint Engagement Tokens to reward pool
         inflate();
 
-        // Caluclate Engager's current Engagement Mana
+        // caluclate engagement mana
         calculateMana(engager_id);
 
-        // Assign engager to variable
-        Profile storage engager = user[engager_id];
+        // load engager's Profile to memory
+        Profile memory engager = user[engager_id];
 
-        // Calculate Engagement Value
+        // update engager's Profile
+        engager.lastEngagement = block.timestamp;
+        engager.mana -= 10;
+
+        // save updated Profile to storage
+        user[engager_id] = engager;
+
+        // calculate Engagement Value
         uint value = rewardPool / balanceOf[engager.eoa] / 100 * engager.mana;
 
-        // Decimals
+        // decimals
         value *= 10 ** 18;
 
-        // Mint Powered Engagement Tokens and distribute to engagee (80%) + engager (20%)
-        // The Engagement Tokens minted upon inflate() are now withdrawable
+        // mint Powered Engagement Tokens and distribute to engagee (80%) + engager (20%)
+        // the Engagement Tokens minted upon inflate() are now withdrawable
         _mint(engager.eoa, value * 20 / 100); 
         _mint(user[engagee_id].eoa, value * 80 / 100);
 
-        // Remove engagement value from reward pool
+        // remove engagement value from reward pool
         rewardPool -= value;
-
-        // Update engager's profile
-        engager.lastEngagement = block.timestamp;
-
-        // Remove 10 Engagement Mana from engager
-        engager.mana -= 10;
 
         emit Engagement(engager_id, engagee_id, block.timestamp, value);
     }
@@ -352,11 +345,10 @@ contract Sphere is ERC20, Monarchy {
     /*///////////////////////////////////////////////////////////////
                                SOULBOUND
     //////////////////////////////////////////////////////////////*/
-    /// @notice Override transfer functions to make token non-transferable
-    /// TODO test undeclared param variables
+    /// @notice override transfer functions to make token non-transferable
 
     function transfer(address, uint256) public virtual override returns (bool) {
-        return false; 
+        revert("SOULBOUND");
     }
 
     function transferFrom(
@@ -364,7 +356,7 @@ contract Sphere is ERC20, Monarchy {
         address, 
         uint256
     ) public virtual override returns (bool) {
-        return false;
+        revert("SOULBOUND");
     }
 
 }
