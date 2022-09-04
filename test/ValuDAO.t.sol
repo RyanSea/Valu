@@ -31,13 +31,17 @@ contract ValuDAOTest is Test {
 
     address ryan;
 
+    address alice;
+
     function setUp() public {
         utils = new Utils();
-        users = utils.createUsers(1);
+        users = utils.createUsers(2);
 
         vm.label(users[0], "Ryan");
 
         ryan = users[0];
+
+        alice = users[1];
 
         $valu = new VALU();
 
@@ -86,6 +90,21 @@ contract ValuDAOTest is Test {
 
         assertEq(sphere.balanceOf(ryan), 250 ether);
         assertEq(token.balanceOf(ryan), 250 ether);
+    }
+
+    function testEngage() public {
+        testAuth();
+
+        valudao.authenticate(1, 321, alice);
+
+        // mana is calculated with block.timestamp which is at 1 in default Anvil
+        skip(10 hours);
+
+        valudao.engage(1, 123, 321);
+
+        assertTrue(sphere.balanceOf(ryan) > 500 ether);
+
+        assertTrue(sphere.balanceOf(alice) > 500 ether);
     }
 
 }

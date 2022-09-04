@@ -39,7 +39,7 @@ contract Sphere is ERC20, Monarchy {
         valu = _valu;
         
         // TEMP Set initial reward pool
-        rewardPool = 100000 * 10 ** 18;
+        rewardPool = 100000 ether;
 
         last = block.timestamp;
 
@@ -246,13 +246,13 @@ contract Sphere is ERC20, Monarchy {
     }
 
     /// @notice engagement mana dictates user engagement power | 0 - 100
-    /// @notice decreases by 10 with each use and increases by 1 every 36 seconds
+    /// @notice decreases by 10% with each use and increases by 1 every 36 seconds
     function calculateMana(uint discord_id) private {
         // Add 1 mana for every 36 seconds that past since last engagement
         uint mana = user[discord_id].mana + (block.timestamp - user[discord_id].lastEngagement) / 36;
 
         // Cap mana at 100
-        user[discord_id].mana = mana <= 100 ? mana : 100;
+        user[discord_id].mana = mana > 100 ? 100 : mana;
     }
 
     /// @notice core engagement function
@@ -270,9 +270,12 @@ contract Sphere is ERC20, Monarchy {
         // load engager's Profile to memory
         Profile memory engager = user[engager_id];
 
-        // update engager's Profile
         engager.lastEngagement = block.timestamp;
-        engager.mana -= 10;
+       
+        uint _mana = engager.mana;
+
+        // decrease mana by 10%
+        engager.mana = _mana - (_mana * 10 / 100);
 
         // save updated Profile to storage
         user[engager_id] = engager;
