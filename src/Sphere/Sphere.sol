@@ -194,15 +194,16 @@ contract Sphere is ERC20, Monarchy {
 
     /// @notice last inflationary event
     uint public last; 
-
-    /// @notice rate of inflation (x 100000000000) 
-    uint public inflation = 11666;
+    
+    /// @notice rate of interest
+    /// @notice 0.00000003 * scalar | about 8% MoM
+    uint public rate = .00000003 ether;
 
     /// @notice new tokens from last inflation
-    uint public newInflation;
+    uint public inflation;
 
-    /// @notice multiple to get inflation to whole num
-    uint public multiple = 100000000000;
+    /// @notice multiple to get rate to whole num
+    uint public scalar = 1e18;
 
     /// @notice engagement-Action between users
     event Engagement(
@@ -224,25 +225,23 @@ contract Sphere is ERC20, Monarchy {
 
         if (intervals == 0) return;
         
-        newInflation = totalSupply;
+        uint onePlusR = 1 ether + rate;
 
-        // calculate new inflation
-        // todo optimize this
-        for(uint i; i < intervals; ++i){
-            newInflation += newInflation * inflation / multiple;
-        }
-        newInflation -= totalSupply;
+        // compound interest forumula: P(1 + r/n) ** nt
+        // implemented: rewardPool(1 + .00000003) ** intervals
+        // note didn't need to include n since n = 1
+        inflation = rewardPool * onePlusR.rpow(intervals, scalar) / scalar;
 
         // mint new inflation
-        token.mint(address(this), newInflation);
+        token.mint(address(this), inflation);
 
         // add to reward pool
-        rewardPool += newInflation;
+        rewardPool += inflation;
         
         // update last to current timestamp
         last = current;
 
-        emit Inflation(last, newInflation); 
+        emit Inflation(last, inflation); 
     }
 
     /// @notice engagement mana dictates user engagement power | 0 - 100
