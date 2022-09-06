@@ -33,15 +33,19 @@ contract ValuDAOTest is Test {
 
     address alice;
 
+    address devon;
+
     function setUp() public {
         utils = new Utils();
-        users = utils.createUsers(2);
+        users = utils.createUsers(3);
 
         vm.label(users[0], "Ryan");
 
         ryan = users[0];
 
         alice = users[1];
+
+        devon = users[2];
 
         $valu = new VALU();
 
@@ -71,11 +75,11 @@ contract ValuDAOTest is Test {
 
         valudao.authenticate(1, 123, ryan);
 
-        assertEq(sphere.balanceOf(ryan), 500 ether);
+        assertEq(token.balanceOf(ryan), 500 ether);
     }
 
     function testUnstake() public {
-        testAuth();
+        testStake();
 
         valudao.powerDown(1, 123, 500 ether);
 
@@ -84,27 +88,71 @@ contract ValuDAOTest is Test {
     }
 
     function testStake() public {
-        testUnstake();
+        testAuth();
 
-        valudao.powerUp(1, 123, 250 ether);
+        valudao.powerUp(1, 123, 500 ether);
 
-        assertEq(sphere.balanceOf(ryan), 250 ether);
-        assertEq(token.balanceOf(ryan), 250 ether);
+        assertEq(sphere.balanceOf(ryan), 500 ether);
+        assertEq(token.balanceOf(ryan), 0 ether);
     }
 
     function testEngage() public {
-        testAuth();
+        testStake();
 
         valudao.authenticate(1, 321, alice);
+
+        valudao.powerUp(1, 321, 500 ether);
 
         // mana is calculated with block.timestamp which is at 1 in default Anvil
         skip(10 hours);
 
         valudao.engage(1, 123, 321);
 
+        valudao.engage(1,321,123);
+
+        skip(5 hours);
+
+        valudao.engage(1,321,123);
+
+        skip(10 days);
+
+        valudao.engage(1,321,123);
+
+        skip(10 days);
+
+        valudao.engage(1,321,123);
+
+        skip(10 days);
+
+        valudao.authenticate(1, 125, devon);
+
+        valudao.engage(1,125,123);
+
+        valudao.engage(1,123,125);
+
+        valudao.engage(1,123,125);
+
+        skip(356 days);
+
+        valudao.engage(1,123,125);
+
         assertTrue(sphere.balanceOf(ryan) > 500 ether);
 
         assertTrue(sphere.balanceOf(alice) > 500 ether);
+
+        // valudao.powerDown(1, 123, sphere.balanceOf(ryan));
+
+        // uint ryanBal = sphere.balanceOf(ryan);
+
+        // uint devonBal = sphere.balanceOf(devon);
+
+        // assertTrue(sphere.balanceOf(ryan) == 0);
+
+        // valudao.engage(1,123,125);
+
+        // assertTrue(sphere.balanceOf(ryan) == 0);
+
+        // assertTrue(sphere.balanceOf(devon) == devonBal);
     }
 
 }

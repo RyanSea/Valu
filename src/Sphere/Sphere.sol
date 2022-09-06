@@ -38,7 +38,7 @@ contract Sphere is ERC20, Monarchy {
         token = _token;
         valu = _valu;
         
-        // TEMP Set initial reward pool
+        // temp Set initial reward pool
         rewardPool = 100000 ether;
 
         last = block.timestamp;
@@ -52,54 +52,55 @@ contract Sphere is ERC20, Monarchy {
     //////////////////////////////////////////////////////////////*/
 
     struct Profile {
-        // User's eoa
+        // user's eoa
         address eoa;
-        // User's current Engagement Mana
+        // user's current Engagement Mana
         uint mana; 
-        // Timestamp of user's last engagement
+        // timestamp of user's last engagement
         uint lastEngagement;
     }
 
-    /// @notice Discord id => Profile
+    /// @notice discord id => Profile
     mapping (uint => Profile) public user;
 
-    /// @notice Address => discord id
+    /// @notice address => discord id
     /// @dev for direct eoa staking / unstaking
     mapping (address => uint) public discord;
 
-    /// @notice Server id => server owner id (discord)
+    /// @notice server id => server owner id (discord)
     mapping (uint => uint) public server_owner;
 
     /*///////////////////////////////////////////////////////////////
                                   LOGIN
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice User authenticated with Ethereum wallet
+    /// @notice user authenticated with eoa
     event Authenticate(uint indexed discord_id, address indexed _address);
 
-    /// @notice Owner id assigned to server id (discord)
+    /// @notice owner id assigned to server id (discord)
     event OwnerAssigned(uint indexed server_id, uint indexed owner_id);
 
-    /// @notice Assigns address to a user's Profile struct and maps struct to discord id
+    /// @notice maps user wallet to Profile
     function authenticate(uint discord_id, address _address) public ruled  {
-        // Create Profile struct 
+        // create Profile struct 
         Profile memory profile;
 
-        // Set address for struct
+        // set address for struct
         profile.eoa = _address;
 
-        // Assign profile to discord id
+        // assign profile to discord id
         user[discord_id] = profile;
 
-        // Assign discord id to address
+        // assign discord id to address
         discord[_address] = discord_id;
 
-        // TEMP Mint 500 tokens for newly authed user
-        _mint(_address, 500 * 10 ** 18);
+        // temp mint 500 tokens for newly authed user
+        token.mint(_address, 500 * 10 ** 18);
 
         emit Authenticate(discord_id, _address);
     }
 
+    /// @notice returns user eoa from discord address
     function getAddress(uint discord_id) public view returns (address _address) {
         _address = user[discord_id].eoa;
     }
@@ -108,7 +109,8 @@ contract Sphere is ERC20, Monarchy {
                                  STAKE
     //////////////////////////////////////////////////////////////*/
     
-    /// @notice Staking event
+    /// @notice staking event
+    /// @param _internal Called from ValuBot vs called from user eoa
     event PowerUp(
         uint indexed discord_id, 
         address indexed _address,
@@ -116,7 +118,7 @@ contract Sphere is ERC20, Monarchy {
         bool indexed _internal
     );
 
-    /// @notice Unstaking event
+    /// @notice unstaking event
     event PowerDown(
         uint indexed discord_id,
         address indexed _address,
@@ -124,8 +126,7 @@ contract Sphere is ERC20, Monarchy {
         bool indexed _internal
     );
     
-    /// @notice Event for exchchanging staked tokens for VALU
-    /// @param _internal Called from ValuBot
+    /// @notice event for exchchanging staked tokens for VALU
     event Exit(
         uint indexed discord_id,
         address indexed _address,
@@ -134,7 +135,7 @@ contract Sphere is ERC20, Monarchy {
         bool indexed _internal 
     );
 
-    /// @notice Stake
+    /// @notice stake
     function powerUp(uint discord_id, uint amount) public ruled returns(bool success) {
         address _address = user[discord_id].eoa;
 
@@ -151,7 +152,7 @@ contract Sphere is ERC20, Monarchy {
         emit PowerUp(discord_id, _address, _amount, true);
     }
 
-    /// @notice Unstake
+    /// @notice unstake
     function powerDown(uint discord_id, uint amount) public ruled {
         address _address = user[discord_id].eoa;
 
@@ -279,14 +280,25 @@ contract Sphere is ERC20, Monarchy {
         // save updated Profile to storage
         user[engager_id] = engager;
 
-        // calculate Engagement Value
-        uint value = rewardPool / balanceOf[engager.eoa] / 100 * engager.mana;
+        uint staked = balanceOf[engager.eoa];
 
-        // decimals
-        value *= 10 ** 18;
+        // return if user has no stake
+        if (staked == 0) return;
+
+        // calculate Engagement Value
+        // temp still figuring out exactly how I'm going to do this
+        /* 
+        *  in general, rewards (both inflation and especially this 'engagement value' equation) are somthing
+        *  that I need to spend more time thinking about. the reward pool should never be empty and the 
+        *  end result will likely look similar to a constant function market maker — the lower the reward pool
+        *  relative to total staked, the less a single staked token can earn on engagement. 
+        *
+        *  for now this equation works like this: pool = 100, user_stake = 25, value = 25
+        *  then it uses a percentage of that based on the user's mana
+        */
+        uint value = rewardPool / (rewardPool / staked) * engager.mana / 100;
 
         // mint Powered Engagement Tokens and distribute to engagee (80%) + engager (20%)
-        // the Engagement Tokens minted upon inflate() are now withdrawable
         _mint(engager.eoa, value * 20 / 100); 
         _mint(user[engagee_id].eoa, value * 80 / 100);
 
@@ -300,7 +312,7 @@ contract Sphere is ERC20, Monarchy {
                             USER EOA STAKING
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice PowerUp From EOA
+    /// @notice powerup From eoa
     function stake(uint amount) public {
         uint _balance = token.balanceOf(msg.sender);
 
@@ -314,7 +326,7 @@ contract Sphere is ERC20, Monarchy {
         emit PowerUp(discord[msg.sender], msg.sender, _amount, false);
     }
 
-    /// @notice PowerDown from EOA
+    /// @notice powerdown from eoa
     function unstake(uint amount) public {
         uint _balance = balanceOf[msg.sender];
 
@@ -327,7 +339,7 @@ contract Sphere is ERC20, Monarchy {
         emit PowerDown(discord[msg.sender], msg.sender, _amount, false);
     }
     
-    /// @notice Exit from EOA
+    /// @notice exit from eoa
     function claim(uint amount) public {
         uint _balance = balanceOf[msg.sender];
 

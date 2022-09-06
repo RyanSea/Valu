@@ -9,13 +9,7 @@ import "./Interfaces/ISphereFactory.sol";
 
 import "Monarchy/";
 
-/*///////////////////////////////////////////////////////////////
-            UNUSED CONTRACT MEANT FOR FUTURE DEV
-//////////////////////////////////////////////////////////////*/
-
-
 /// @title ValuDAO
-/// TODO Add auth (Gnosis Safe)
 contract ValuDAO is Monarchy {
 
     /*///////////////////////////////////////////////////////////////
@@ -45,8 +39,7 @@ contract ValuDAO is Monarchy {
         string token_symbol
     );
 
-    /// @notice Creates community level protocol
-    /// TODO Add Gnosis multisig functionality for spheres
+    /// @notice creates community level protocol
     function create(
         uint server_id, 
         string calldata token_name, 
@@ -127,10 +120,10 @@ contract ValuDAO is Monarchy {
 
     //// INTERNAL ////
 
-    /// @notice Symbol => Whether or not it's in use
+    /// @notice symbol => whether or not it's in use
     mapping (string => bool) public symbols;
 
-    /// @notice Server id => Sphere Profile
+    /// @notice server id => Sphere Profile
     mapping(uint => Sphere_Profile) public spheres;
 
     struct Sphere_Profile {
@@ -145,7 +138,7 @@ contract ValuDAO is Monarchy {
     }
     //// EXTERNAL ////
 
-    /// @notice Get user's address by Discord ID
+    /// @notice get user's address by discord id
     function getAddress(uint server_id, uint discord_id) public view returns (address _address) {
         _address = spheres[server_id].sphere.getAddress(discord_id);
     }
